@@ -32,6 +32,17 @@
     "languages": [
       "en",
       "zh-cn"
-    ]
+    ],
+    "appsFolders": [
+      "monolithic"
+    ],
+    "directoryPath": "../",
+    "dockerRepositoryName": "aloneload",
+    "dockerPushCommand": "docker push",
+    "kubernetesNamespace": "default",
+    "kubernetesServiceType": "NodePort",
+    "monitoring": "no",
+    "istio": "no",
+    "istioRoute": false
   }
 }
