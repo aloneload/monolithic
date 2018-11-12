@@ -5,65 +5,45 @@ node {
         checkout scm
     }
 
-    docker.image('jhipster/jhipster:v5.2.1').inside('-u root -e MAVEN_OPTS="-Duser.home=./"') {
-        stage('check java') {
-            sh "java -version"
-        }
+    stage('check java') {
+        sh "java -version"
+    }
 
-        stage('clean') {
-            sh "chmod +x mvnw"
-            sh "./mvnw clean"
-        }
+    stage('clean') {
+        sh "chmod +x mvnw"
+        sh "./mvnw clean"
+    }
 
-        stage('install tools') {
-            sh "./mvnw com.github.eirslett:frontend-maven-plugin:install-node-and-yarn -DnodeVersion=v8.11.3 -DyarnVersion=v1.9.2"
-        }
+    stage('install tools') {
+        sh "./mvnw com.github.eirslett:frontend-maven-plugin:install-node-and-yarn -DnodeVersion=v10.13.0 -DyarnVersion=v1.12.1"
+    }
 
-        stage('yarn install') {
-            sh "./mvnw com.github.eirslett:frontend-maven-plugin:yarn"
-        }
+    stage('yarn install') {
+        sh "./mvnw com.github.eirslett:frontend-maven-plugin:yarn"
+    }
 
-        stage('backend tests') {
-            try {
-                sh "./mvnw test"
-            } catch(err) {
-                throw err
-            } finally {
-                junit '**/target/surefire-reports/TEST-*.xml'
-            }
-        }
-
-        stage('frontend tests') {
-            try {
-                sh "./mvnw com.github.eirslett:frontend-maven-plugin:yarn -Dfrontend.yarn.arguments=test"
-            } catch(err) {
-                throw err
-            } finally {
-                junit '**/target/test-results/jest/TESTS-*.xml'
-            }
-        }
-
-        stage('packaging') {
-            sh "./mvnw verify -Pprod -DskipTests"
-            archiveArtifacts artifacts: '**/target/*.war', fingerprint: true
-        }
-        stage('quality analysis') {
-            withSonarQubeEnv('sonar') {
-                sh "./mvnw sonar:sonar"
-            }
+    stage('backend tests') {
+        try {
+            sh "./mvnw test"
+        } catch(err) {
+            throw err
+        } finally {
+            junit '**/target/surefire-reports/TEST-*.xml'
         }
     }
 
-    def dockerImage
-    stage('build docker') {
-        sh "cp -R src/main/docker target/"
-        sh "cp target/*.war target/docker/"
-        dockerImage = docker.build('docker-login/monolithic', 'target/docker')
+    stage('frontend tests') {
+        try {
+            sh "./mvnw com.github.eirslett:frontend-maven-plugin:yarn -Dfrontend.yarn.arguments='test -u'"
+        } catch(err) {
+            throw err
+        } finally {
+            junit '**/target/test-results/jest/TESTS-*.xml'
+        }
     }
 
-    stage('publish docker') {
-        docker.withRegistry('https://registry.hub.docker.com', 'docker-login') {
-            dockerImage.push 'latest'
-        }
+    stage('packaging') {
+        sh "./mvnw verify -Pprod -DskipTests"
+        archiveArtifacts artifacts: '**/target/*.war', fingerprint: true
     }
 }
